@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 
-// Replace this with your username
-const OWNER_USERNAME = 'YourUsernameHere';
+// Your in-game username
+const OWNER_USERNAME = 'be_like_jesus';
 
 // WebSocket server port (Render sets process.env.PORT)
 const PORT = process.env.PORT || 8080;
@@ -27,12 +27,12 @@ const defaultGear = {
     boots: { type: 'leather_boots', enchantments: {} }
 };
 
-// Helper: send inventory
+// Helper: send inventory to a player
 function sendInventory(player, inventory) {
     player.send(JSON.stringify({ type: 'setInventory', inventory }));
 }
 
-// Helper: give perks chest if any slot empty
+// Helper: give perks if any slot is empty
 function givePerksIfEmpty(player, inventory) {
     const emptySlots = Object.keys(inventory).filter(slot => !inventory[slot]);
     if (emptySlots.length > 0) {
@@ -58,11 +58,11 @@ wss.on('connection', (ws) => {
             const username = data.username;
             ws.username = username;
 
-            if (username === be_like_jesus) {
-                ws.immortal = true;
+            if (username === OWNER_USERNAME) {
+                ws.immortal = true; // your character is immortal
                 sendInventory(ws, ownerGear);
-                console.log(`Owner ${username} received maxed gear`);
                 givePerksIfEmpty(ws, ownerGear);
+                console.log(`Owner ${username} received maxed gear and perks`);
             } else {
                 ws.immortal = false;
                 sendInventory(ws, defaultGear);
@@ -70,13 +70,13 @@ wss.on('connection', (ws) => {
             }
         }
 
-        // Optional: handle requests to check empty slots
+        // Optional: check empty slots periodically
         if (data.type === 'checkInventory' && ws.username === OWNER_USERNAME) {
             givePerksIfEmpty(ws, ownerGear);
         }
     });
 
-    // Immortality example: prevent death
+    // Immortality example: prevent damage
     ws.on('damage', (amount) => {
         if (ws.immortal) {
             ws.send(JSON.stringify({ type: 'cancelDamage' }));
